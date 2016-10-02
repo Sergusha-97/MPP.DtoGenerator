@@ -8,6 +8,6 @@ namespace ITypeMap
 {
     public interface ITypeMap
     {
-         Dictionary<string, Type> TypeMap {  get;  set; }
+         Dictionary<string, Type> TypeMap {  get;  }
     }
 }
