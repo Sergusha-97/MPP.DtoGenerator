@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace ITypeMap
 {
-    interface ITypeMap
+    public interface ITypeMap
     {
-        public Dictionary<string, Type> TypeMap { public get; private set; }
+         Dictionary<string, Type> TypeMap {  get;  set; }
     }
 }
