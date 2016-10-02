@@ -8,7 +8,7 @@ using System.Runtime.Serialization;
 namespace DtoGenerator
 {
     [DataContract]
-    class ClassType
+    public class ClassType
     {
         [DataMember]
         public string className { get; set; }
