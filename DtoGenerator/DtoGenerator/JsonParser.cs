@@ -19,7 +19,7 @@ namespace DtoGenerator
         public ClassType[] GetClassesFromJson()
         {
             ClassType[] classTypes;
-            using (FileStream fstream = File.OpenRead(sourceName))
+            using (FileStream fstream = new FileStream(sourceName, FileMode.OpenOrCreate))
             {
                 DataContractJsonSerializer serializer = new DataContractJsonSerializer(typeof(ClassType[]));
                 classTypes = (ClassType[])serializer.ReadObject(fstream);

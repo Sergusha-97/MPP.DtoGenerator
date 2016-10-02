@@ -11,7 +11,7 @@ namespace DtoGenerator
     class ClassType
     {
         [DataMember]
-        public string ClassName { get; set; }
+        public string className { get; set; }
         [DataMember]
         public ClassField[] Fields { get; set; }
     }

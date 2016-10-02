@@ -11,11 +11,11 @@ namespace DtoGenerator
     class ClassField
     {
         [DataMember]
-        public string Name { get; set; }
+        public string name { get; set; }
         [DataMember]
-        public string Type { get; set; }
+        public string type { get; set; }
         [DataMember]
-        public string Format { get; set; }
+        public string format { get; set; }
 
     }
 }
