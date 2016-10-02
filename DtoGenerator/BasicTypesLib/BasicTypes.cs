@@ -12,7 +12,7 @@ namespace BasicTypesLib
         private Dictionary<string,Type> typeMap;
         public Dictionary<string, Type> TypeMap
         {
-            public get 
+             get 
             {
                 return typeMap;
             }
