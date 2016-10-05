@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.CodeDom.Compiler;
 using System.CodeDom;
@@ -12,78 +13,111 @@ using System.IO;
 
 namespace DtoGeneratorLib
 {
-    class DtoClassGenerator
+    public class DtoClassGenerator
     {
-        private static volatile DtoClassGenerator instance = null;
         private static readonly object syncRoot = new Object();
-        private string className;
-        private string nameSpace;
-        private ClassType[] classes;
-        private Dictionary<string, Type> typeMap;
-        private DtoClassGenerator(string nameSpace, ClassType[] classes, Dictionary<string, Type> typeMap)
+        private readonly string nameSpace;
+        private  readonly Dictionary<string, Type> typeMap;
+        private readonly List<string> usingStatements;
+        private int max_task_number;
+        private string path;
+        private Semaphore semaphore;
+
+        public DtoClassGenerator(string nameSpace,  Dictionary<string, Type> typeMap, int max_task_number)
         {
             this.nameSpace = nameSpace;
-            this.classes = classes;
             this.typeMap = typeMap;
-        }
-        public static DtoClassGenerator Instance(string nameSpace, ClassType[] classes, Dictionary<string, Type> typeMap)
-        {
-            if (instance == null)
-            {
-                lock (syncRoot)
-                {
-                    if (instance == null)
-                    {
-                        instance = new DtoClassGenerator(nameSpace, classes, typeMap);
-                    }
-                }
-            }
-            return instance;
-        }
-        private Dictionary<string,CodeCompileUnit> GetCodeCompileUnits()
-        {
-            Dictionary<string, CodeCompileUnit> result = new Dictionary<string, CodeCompileUnit>();
-            foreach (ClassType classElem in classes)
-            {
-                CodeCompileUnit compileUnit = new CodeCompileUnit();
-                CodeNamespace ns = new CodeNamespace(nameSpace);
-                compileUnit.Namespaces.Add(ns);
-                ns.Imports.Add(new CodeNamespaceImport("System"));
-                CodeTypeDeclaration classType = new CodeTypeDeclaration(classElem.className);
-                ns.Types.Add(classType);
-                foreach (ClassField field in classElem.Fields)
-                {
-                    var property = new CodeMemberProperty();
-                    property.Attributes = MemberAttributes.Public;
-                    property.Type = new CodeTypeReference(typeMap[field.format]);
-                    property.Name = field.name;
-                    //property.GetStatements.Add(new CodeMethodReturnStatement(new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), fieldName)));
-                    //property.SetStatements.Add(new CodeAssignStatement(new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), fieldName), new CodePropertySetValueReferenceExpression()));
-                    classType.Members.Add(property);
+            this.max_task_number = max_task_number;
+            usingStatements = new List<string>();
+            usingStatements.Add("System");
+            usingStatements.Add("System.Collections.Generic");
+            usingStatements.Add("System.Linq");
+            usingStatements.Add("System.Text");
+            usingStatements.Add("System.Threading.Tasks");
 
-                }
-                result[classElem.className] = compileUnit;
-            }
-            return result;
         }
-        public  void  GenerateCSharpCode(string path)
+        private void ImportNamespaces(CodeNamespace ns)
         {
-            CSharpCodeProvider provider = new CSharpCodeProvider();
-            Dictionary<string, CodeCompileUnit> compileUnits = GetCodeCompileUnits();
-            foreach (String className in compileUnits.Keys)
+            foreach (string statement in usingStatements)
             {
-                string filename = Path.Combine(path, className + ".cs");
-                using (StreamWriter sw = new StreamWriter(filename, false)) //???
+                ns.Imports.Add(new CodeNamespaceImport(statement));
+            }
+        }
+        private void CreateProperties(ClassField elem, CodeCompileUnit compileUnit, CodeTypeDeclaration classType)
+        {
+            var fieldName = "_" + elem.name;
+            var field = new CodeMemberField(typeMap[elem.format], fieldName);
+            classType.Members.Add(field);
+            var property = new CodeMemberProperty();
+            property.Attributes = MemberAttributes.Public | MemberAttributes.Final;
+            property.Type = new CodeTypeReference(typeMap[elem.format]);
+            property.Name = elem.name;
+            property.GetStatements.Add(new CodeMethodReturnStatement(new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), fieldName)));
+            property.SetStatements.Add(new CodeAssignStatement(new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), fieldName), new CodePropertySetValueReferenceExpression()));
+            classType.Members.Add(property);
+        }
+        private CodeCompileUnit GetCodeCompileUnits(ClassType classElem)
+        {
+            CodeCompileUnit compileUnit = new CodeCompileUnit();
+            CodeNamespace ns = new CodeNamespace(nameSpace);
+            compileUnit.Namespaces.Add(ns);
+            ImportNamespaces(ns);
+            CodeTypeDeclaration classType = new CodeTypeDeclaration(classElem.className);
+            ns.Types.Add(classType);
+            foreach (ClassField elem in classElem.properties)
+            {
+                CreateProperties(elem, compileUnit, classType);
+            }
+            return compileUnit;
+            
+        }
+        private void CreateClass(ClassType classelem)
+        {
+                CSharpCodeProvider provider = new CSharpCodeProvider();
+                CodeCompileUnit compileUnit = GetCodeCompileUnits(classelem);
+                string filename = Path.Combine(path, classelem.className + ".cs");
+                using (StreamWriter sw = new StreamWriter(filename, false))
                 {
                     IndentedTextWriter tw = new IndentedTextWriter(sw, "    ");
-                    provider.GenerateCodeFromCompileUnit(compileunit, tw,
+                    provider.GenerateCodeFromCompileUnit(compileUnit, tw,
                         new CodeGeneratorOptions());
                     tw.Close();
                 }
+                
 
-            }
-
+                
         }
-        
+        private void taskFinalization (CountdownEvent countdownEvent)
+        {         
+            semaphore.Release();
+            countdownEvent.Signal();
+        }
+        private void WaitAllTasksFinalization(CountdownEvent countdownEvent)
+        {
+            countdownEvent.Wait();
+        }
+
+        public void GenerateCSharpCode(string path, ClassType[] classes)
+        {
+            this.path = path;
+            semaphore = new Semaphore(max_task_number, max_task_number);
+            using (var countDownEvent = new CountdownEvent(classes.Length))
+            {
+                for (int i = 0; i < classes.Length; i++ )
+                {
+                    ClassType classelem = classes[i];
+                    semaphore.WaitOne();
+                    ThreadPool.QueueUserWorkItem(
+                        delegate
+                        {
+                            CreateClass(classelem);
+                            taskFinalization(countDownEvent);
+                            
+                        });
+
+                }
+                WaitAllTasksFinalization(countDownEvent);
+            }
+        }     
     }
 }

@@ -13,6 +13,6 @@ namespace DtoGenerator
         [DataMember]
         public string className { get; set; }
         [DataMember]
-        public ClassField[] Fields { get; set; }
+        public ClassField[] properties { get; set; }
     }
 }

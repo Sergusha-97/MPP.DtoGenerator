@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
 using System.IO;
+ 
 
 namespace DtoGenerator
 {
@@ -18,13 +19,15 @@ namespace DtoGenerator
         }
         public ClassType[] GetClassesFromJson()
         {
-            ClassType[] classTypes;
-            using (FileStream fstream = new FileStream(sourceName, FileMode.OpenOrCreate))
+            DataContractJsonSerializer jsonFormatter = new DataContractJsonSerializer(typeof(ClassType[]));
+            using (FileStream fs = new FileStream(sourceName, FileMode.OpenOrCreate))
             {
-                DataContractJsonSerializer serializer = new DataContractJsonSerializer(typeof(ClassType[]));
-                classTypes = (ClassType[])serializer.ReadObject(fstream);
+                ClassType[] newpeople = (ClassType[])jsonFormatter.ReadObject(fs);
+                return newpeople;
+
             }
-            return classTypes;
+
+         
         }
 
     }
