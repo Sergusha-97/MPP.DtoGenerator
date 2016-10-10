@@ -10,7 +10,7 @@ using System.IO;
 
 namespace DtoGenerator
 {
-    class JsonParser
+    internal class JsonParser
     {
         private string sourceName;
         public JsonParser (string filename)

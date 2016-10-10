@@ -7,7 +7,7 @@ using System.Configuration;
 using System.Collections.Specialized;
 namespace DtoGenerator
 {
-    class Settings
+   internal class Settings
     {
         public readonly int Max_task_number;
         public readonly string Namespace;

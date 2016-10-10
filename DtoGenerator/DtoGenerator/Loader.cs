@@ -7,7 +7,7 @@ using ITypeMap;
 
 namespace DtoGenerator
 {
-    abstract class Loader
+    internal abstract class Loader
     {
         abstract public List<ITypeMap.ITypeMap> LoadPlugins(string path);
     }

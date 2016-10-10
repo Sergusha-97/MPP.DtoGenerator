@@ -7,7 +7,7 @@ using System.IO;
 using System.Reflection;
 namespace DtoGenerator
 {
-    class PluginLoader : Loader
+   internal class PluginLoader : Loader
     {
         public override List<ITypeMap.ITypeMap> LoadPlugins(string path)
         {
