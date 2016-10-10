@@ -87,7 +87,7 @@ namespace DtoGeneratorLib
 
                 
         }
-        private void taskFinalization (CountdownEvent countdownEvent)
+        private void onTaskFinish (CountdownEvent countdownEvent)
         {         
             semaphore.Release();
             countdownEvent.Signal();
