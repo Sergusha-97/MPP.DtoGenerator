@@ -9,6 +9,6 @@ namespace DtoGenerator
 {
     internal abstract class Loader
     {
-        abstract public List<ITypeMap.ITypeMap> LoadPlugins(string path);
+        abstract internal List<ITypeMap.ITypeMap> LoadPlugins(string path);
     }
 }

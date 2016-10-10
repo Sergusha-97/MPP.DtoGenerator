@@ -9,20 +9,11 @@ namespace DtoGenerator
 {
    internal class Settings
     {
-        public readonly int Max_task_number;
-        public readonly string Namespace;
-        public readonly string Destination_folder;
-        public readonly string Source_file;
-        public readonly string Plugins_source_folder;
-        public Settings(NameValueCollection appSettings)
-        {
-            Max_task_number = Convert.ToInt32(appSettings["Max_task_number"]);
-            Namespace = appSettings["Namespace"];
-            Destination_folder = appSettings["Destination_folder"];
-            Source_file = appSettings["Source_file"];
-            Plugins_source_folder = appSettings["Plugins_source_folder"];
-        }
-
+       internal int Max_task_number { get; set; }
+       internal string Namespace { get; set; }
+       internal string Destination_folder { get; set; }
+       internal string Source_file { get; set; }
+       internal string Plugins_source_folder { get; set; }
 
     }
 }

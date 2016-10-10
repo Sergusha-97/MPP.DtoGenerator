@@ -17,7 +17,7 @@ namespace DtoGenerator
         {
             sourceName = filename;
         }
-        public ClassType[] GetClassesFromJson()
+        internal ClassType[] GetClassesFromJson()
         {
             DataContractJsonSerializer jsonFormatter = new DataContractJsonSerializer(typeof(ClassType[]));
             using (FileStream fs = new FileStream(sourceName, FileMode.OpenOrCreate))

@@ -9,7 +9,7 @@ namespace DtoGenerator
 {
    internal class PluginLoader : Loader
     {
-        public override List<ITypeMap.ITypeMap> LoadPlugins(string path)
+       internal override List<ITypeMap.ITypeMap> LoadPlugins(string path)
         {
             string[] dllFileNames = null;
             if (Directory.Exists(path))
