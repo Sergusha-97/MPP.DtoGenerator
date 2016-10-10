@@ -8,7 +8,7 @@ using System.Collections.Specialized;
 
 namespace DtoGenerator
 {
-    internal class Builder
+    internal abstract class Builder
     {
         internal Settings settings { get; private set; }
         protected  NameValueCollection appSettings;

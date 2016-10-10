@@ -16,6 +16,10 @@ namespace DtoGenerator
             {
                 dllFileNames = Directory.GetFiles(path, "*.dll");
             }
+            else
+            {
+                return new List<ITypeMap.ITypeMap>();
+            }
             List<Assembly> assemblies = new List<Assembly>(dllFileNames.Length);
             foreach (string dllFile in dllFileNames)
             {

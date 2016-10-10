@@ -53,6 +53,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Builder.cs" />
+    <Compile Include="CSharpCodeSaver.cs" />
     <Compile Include="JsonParser.cs" />
     <Compile Include="Loader.cs" />
     <Compile Include="PluginLoader.cs" />

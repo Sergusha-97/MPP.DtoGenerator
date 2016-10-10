@@ -9,6 +9,7 @@ using System.CodeDom;
 using DtoGenerator;
 using Microsoft.CSharp;
 using System.IO;
+using System.Collections.Concurrent;
 
 
 namespace DtoGeneratorLib
@@ -20,7 +21,7 @@ namespace DtoGeneratorLib
         private  readonly Dictionary<string, Type> typeMap;
         private readonly List<string> usingStatements;
         private int max_task_number;
-        private string path;
+        private ConcurrentDictionary<string,CodeCompileUnit> compileUnits;
         private Semaphore semaphore;
 
         public DtoClassGenerator(string nameSpace,  Dictionary<string, Type> typeMap, int max_task_number)
@@ -73,19 +74,7 @@ namespace DtoGeneratorLib
         }
         private void CreateClass(ClassType classelem)
         {
-                CSharpCodeProvider provider = new CSharpCodeProvider();
-                CodeCompileUnit compileUnit = GetCodeCompileUnits(classelem);
-                string filename = Path.Combine(path, classelem.className + ".cs");
-                using (StreamWriter sw = new StreamWriter(filename, false))
-                {
-                    IndentedTextWriter tw = new IndentedTextWriter(sw, "    ");
-                    provider.GenerateCodeFromCompileUnit(compileUnit, tw,
-                        new CodeGeneratorOptions());
-                    tw.Close();
-                }
-                
-
-                
+                compileUnits[classelem.className] = GetCodeCompileUnits(classelem);
         }
         private void onTaskFinish (CountdownEvent countdownEvent)
         {         
@@ -97,9 +86,9 @@ namespace DtoGeneratorLib
             countdownEvent.Wait();
         }
 
-        public void GenerateCSharpCode(string path, ClassType[] classes)
+        public ConcurrentDictionary<string, CodeCompileUnit> GenerateCSharpCode(ClassType[] classes)
         {
-            this.path = path;
+            compileUnits = new ConcurrentDictionary<string, CodeCompileUnit>();
             semaphore = new Semaphore(max_task_number, max_task_number);
             using (var countDownEvent = new CountdownEvent(classes.Length))
             {
@@ -111,12 +100,13 @@ namespace DtoGeneratorLib
                         delegate
                         {
                             CreateClass(classelem);
-                            taskFinalization(countDownEvent);
+                            onTaskFinish(countDownEvent);
                             
                         });
 
                 }
                 WaitAllTasksFinalization(countDownEvent);
+                return compileUnits;
             }
         }     
     }
