@@ -9,11 +9,11 @@ namespace DtoGenerator
 {
    internal class Settings
     {
-       internal int Max_task_number { get; set; }
+       internal int MaxTaskNumber { get; set; }
        internal string Namespace { get; set; }
-       internal string Destination_folder { get; set; }
-       internal string Source_file { get; set; }
-       internal string Plugins_source_folder { get; set; }
+       internal string DestinationFolder { get; set; }
+       internal string SourceFile { get; set; }
+       internal string PluginsSourceFolder { get; set; }
 
     }
 }

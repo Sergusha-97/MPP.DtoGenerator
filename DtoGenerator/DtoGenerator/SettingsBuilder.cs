@@ -10,11 +10,11 @@ namespace DtoGenerator
     {
         internal override void SetDestinationFolder()
         {
-            settings.Destination_folder = appSettings["Destination_folder"]; ;
+            settings.DestinationFolder = appSettings["Destination_folder"]; ;
         }
         internal override void SetMaxTaskNumber()
         {
-            settings.Max_task_number = Convert.ToInt32(appSettings["Max_task_number"]);
+            settings.MaxTaskNumber = Convert.ToInt32(appSettings["Max_task_number"]);
         }
         internal override void SetNamespace()
         {
@@ -22,11 +22,11 @@ namespace DtoGenerator
         }
         internal override void SetPluginsSourceFolder()
         {
-            settings.Plugins_source_folder = appSettings["Plugins_source_folder"]; 
+            settings.PluginsSourceFolder = appSettings["Plugins_source_folder"]; 
         }
         internal override void SetSourceFile()
         {
-            settings.Source_file = appSettings["Source_file"];
+            settings.SourceFile = appSettings["Source_file"];
         }
     }
 }
