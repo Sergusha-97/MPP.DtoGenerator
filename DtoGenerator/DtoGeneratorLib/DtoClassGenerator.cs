@@ -14,7 +14,7 @@ using System.Collections.Concurrent;
 
 namespace DtoGeneratorLib
 {
-    public class DtoClassGenerator
+    public class DtoClassGenerator : IDisposable
     {
         private static readonly object syncRoot = new Object();
         private readonly string nameSpace;
@@ -29,6 +29,7 @@ namespace DtoGeneratorLib
             this.nameSpace = nameSpace;
             this.typeMap = typeMap;
             this.max_task_number = max_task_number;
+            semaphore = new Semaphore(max_task_number, max_task_number);
             usingStatements = new List<string>();
             usingStatements.Add("System");
             usingStatements.Add("System.Collections.Generic");
@@ -39,46 +40,54 @@ namespace DtoGeneratorLib
         }
         private void ImportNamespaces(CodeNamespace ns)
         {
-            foreach (string statement in usingStatements)
-            {
-                ns.Imports.Add(new CodeNamespaceImport(statement));
-            }
+                foreach (string statement in usingStatements)
+                {
+                    ns.Imports.Add(new CodeNamespaceImport(statement));
+                }
         }
         private void CreateProperties(ClassField elem, CodeCompileUnit compileUnit, CodeTypeDeclaration classType)
         {
-            var fieldName = "_" + elem.name;
-            var field = new CodeMemberField(typeMap[elem.format], fieldName);
-            classType.Members.Add(field);
-            var property = new CodeMemberProperty();
-            property.Attributes = MemberAttributes.Public | MemberAttributes.Final;
-            property.Type = new CodeTypeReference(typeMap[elem.format]);
-            property.Name = elem.name;
-            property.GetStatements.Add(new CodeMethodReturnStatement(new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), fieldName)));
-            property.SetStatements.Add(new CodeAssignStatement(new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), fieldName), new CodePropertySetValueReferenceExpression()));
-            classType.Members.Add(property);
+                var fieldName = "_" + elem.name;
+                var field = new CodeMemberField(typeMap[elem.format], fieldName);
+                classType.Members.Add(field);
+                var property = new CodeMemberProperty();
+                property.Attributes = MemberAttributes.Public | MemberAttributes.Final;
+                property.Type = new CodeTypeReference(typeMap[elem.format]);
+                property.Name = elem.name;
+                property.GetStatements.Add(new CodeMethodReturnStatement(new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), fieldName)));
+                property.SetStatements.Add(new CodeAssignStatement(new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), fieldName), new CodePropertySetValueReferenceExpression()));
+                classType.Members.Add(property);
+
         }
         private CodeCompileUnit GetCodeCompileUnits(ClassType classElem)
         {
-            CodeCompileUnit compileUnit = new CodeCompileUnit();
-            CodeNamespace ns = new CodeNamespace(nameSpace);
-            compileUnit.Namespaces.Add(ns);
-            ImportNamespaces(ns);
-            CodeTypeDeclaration classType = new CodeTypeDeclaration(classElem.className);
-            ns.Types.Add(classType);
-            foreach (ClassField elem in classElem.properties)
-            {
-                CreateProperties(elem, compileUnit, classType);
-            }
-            return compileUnit;
-            
+                CodeCompileUnit compileUnit = new CodeCompileUnit();
+                CodeNamespace ns = new CodeNamespace(nameSpace);
+                compileUnit.Namespaces.Add(ns);
+                ImportNamespaces(ns);
+                CodeTypeDeclaration classType = new CodeTypeDeclaration(classElem.className);
+                ns.Types.Add(classType);
+                foreach (ClassField elem in classElem.properties)
+                {
+                    CreateProperties(elem, compileUnit, classType);
+                }
+                return compileUnit; 
         }
         private void CreateClass(ClassType classelem)
         {
+            try
+            {
                 compileUnits[classelem.className] = GetCodeCompileUnits(classelem);
+            }
+            catch { } // what a shit?!
+            finally
+            {
+                semaphore.Release();
+            }
+                
         }
         private void onTaskFinish (CountdownEvent countdownEvent)
-        {         
-            semaphore.Release();
+        {                    
             countdownEvent.Signal();
         }
         private void WaitAllTasksFinalization(CountdownEvent countdownEvent)
@@ -89,7 +98,6 @@ namespace DtoGeneratorLib
         public ConcurrentDictionary<string, CodeCompileUnit> GenerateCSharpCode(ClassType[] classes)
         {
             compileUnits = new ConcurrentDictionary<string, CodeCompileUnit>();
-            semaphore = new Semaphore(max_task_number, max_task_number);
             using (var countDownEvent = new CountdownEvent(classes.Length))
             {
                 for (int i = 0; i < classes.Length; i++ )
@@ -108,6 +116,11 @@ namespace DtoGeneratorLib
                 WaitAllTasksFinalization(countDownEvent);
                 return compileUnits;
             }
-        }     
+            
+        }
+        public void Dispose()
+        {
+            semaphore.Close();
+        }
     }
 }

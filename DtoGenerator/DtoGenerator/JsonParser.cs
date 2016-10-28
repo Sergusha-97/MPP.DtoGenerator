@@ -22,9 +22,15 @@ namespace DtoGenerator
             DataContractJsonSerializer jsonFormatter = new DataContractJsonSerializer(typeof(ClassType[]));
             using (FileStream fs = new FileStream(sourceName, FileMode.OpenOrCreate))
             {
-                ClassType[] newpeople = (ClassType[])jsonFormatter.ReadObject(fs);
-                return newpeople;
-
+                try
+                {
+                    ClassType[] newpeople = (ClassType[])jsonFormatter.ReadObject(fs);
+                    return newpeople;                
+                }
+                catch
+                {
+                    throw;
+                }
             }
 
          

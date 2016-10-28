@@ -20,10 +20,11 @@ namespace DtoGenerator
                 string filename = Path.Combine(path, classname + ".cs");
                 using (StreamWriter sw = new StreamWriter(filename, false))
                 {
-                    IndentedTextWriter tw = new IndentedTextWriter(sw, "    ");
-                    provider.GenerateCodeFromCompileUnit(compileUnits[classname], tw,
-                        new CodeGeneratorOptions());
-                    tw.Close();
+                    using (IndentedTextWriter tw = new IndentedTextWriter(sw, "    "))
+                    {
+                        provider.GenerateCodeFromCompileUnit(compileUnits[classname], tw,
+                         new CodeGeneratorOptions());
+                    }
                 }
             }
 

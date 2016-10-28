@@ -7,59 +7,68 @@ using System.IO;
 using System.Reflection;
 namespace DtoGenerator
 {
-   internal class PluginLoader : Loader
+    internal class PluginLoader : Loader
     {
-       internal override List<ITypeMap.ITypeMap> LoadPlugins(string path)
+        internal override List<ITypeMap.ITypeMap> LoadPlugins(string path)
         {
-            string[] dllFileNames = null;
-            if (Directory.Exists(path))
+            try
             {
-                dllFileNames = Directory.GetFiles(path, "*.dll");
-            }
-            else
-            {
-                return new List<ITypeMap.ITypeMap>();
-            }
-            List<Assembly> assemblies = new List<Assembly>(dllFileNames.Length);
-            foreach (string dllFile in dllFileNames)
-            {
+
+
+                string[] dllFileNames = null;
+                if (Directory.Exists(path))
+                {
+                    dllFileNames = Directory.GetFiles(path, "*.dll");
+                }
+                else
+                {
+                    return new List<ITypeMap.ITypeMap>();
+                }
+                List<Assembly> assemblies = new List<Assembly>(dllFileNames.Length);
+                foreach (string dllFile in dllFileNames)
+                {
                     AssemblyName an = AssemblyName.GetAssemblyName(dllFile);
                     Assembly assembly = Assembly.Load(an);
                     assemblies.Add(assembly);
 
-            }
-            Type pluginType = typeof(ITypeMap.ITypeMap);
-            List<Type> pluginTypes = new List<Type>();
-            foreach (Assembly assembly in assemblies)
-            {
-                if (assembly != null)
+                }
+                Type pluginType = typeof(ITypeMap.ITypeMap);
+                List<Type> pluginTypes = new List<Type>();
+                foreach (Assembly assembly in assemblies)
                 {
-                    Type[] types = assembly.GetTypes();
-                    foreach (Type type in types)
+                    if (assembly != null)
                     {
-                        if (type.IsInterface || type.IsAbstract)
+                        Type[] types = assembly.GetTypes();
+                        foreach (Type type in types)
                         {
-                            continue;
-                        }
-                        else
-                        {
-                            if (type.GetInterface(pluginType.FullName) != null)
+                            if (type.IsInterface || type.IsAbstract)
                             {
-                                pluginTypes.Add(type);
+                                continue;
+                            }
+                            else
+                            {
+                                if (type.GetInterface(pluginType.FullName) != null)
+                                {
+                                    pluginTypes.Add(type);
+                                }
                             }
                         }
+
                     }
-
                 }
-            }
-            List<ITypeMap.ITypeMap> plugins = new List<ITypeMap.ITypeMap>(pluginTypes.Count);
-            foreach (Type type in pluginTypes)
-            {
-                ITypeMap.ITypeMap plugin = (ITypeMap.ITypeMap)Activator.CreateInstance(type);
-                plugins.Add(plugin);
-            }
-            return plugins;
+                List<ITypeMap.ITypeMap> plugins = new List<ITypeMap.ITypeMap>(pluginTypes.Count);
+                foreach (Type type in pluginTypes)
+                {
+                    ITypeMap.ITypeMap plugin = (ITypeMap.ITypeMap)Activator.CreateInstance(type);
+                    plugins.Add(plugin);
+                }
+                return plugins;
 
+            }
+            catch
+            {
+                throw;
+            }
         }
     }
 }

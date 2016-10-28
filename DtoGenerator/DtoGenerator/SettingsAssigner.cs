@@ -12,13 +12,21 @@ namespace DtoGenerator
     {
         internal Settings Set (Builder builder,NameValueCollection appSettings)
         {
-            builder.CreateSettings(appSettings);
-            builder.SetDestinationFolder();
-            builder.SetMaxTaskNumber();
-            builder.SetNamespace();
-            builder.SetPluginsSourceFolder();
-            builder.SetSourceFile();
-            return builder.settings;
+            try
+            {
+                builder.CreateSettings(appSettings);
+                builder.SetDestinationFolder();
+                builder.SetMaxTaskNumber();
+                builder.SetNamespace();
+                builder.SetPluginsSourceFolder();
+                builder.SetSourceFile();
+                return builder.settings;
+            }
+            catch
+            {
+                throw;
+            }
+
         }
     }
 }
